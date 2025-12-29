@@ -1,4 +1,4 @@
-name: Build FOX RP Launcher
+name: Build FOX RP Launcher Final
 
 on:
   push:
@@ -27,24 +27,26 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Patch and Build
+      - name: Auto Patch and Build
         run: |
-          # 1. Находим где лежит проект (ищем папку с pubspec.yaml)
-          PROJECT_ROOT=$(find . -name "pubspec.yaml" -printf '%h\n' | head -n 1)
-          echo "Project found in: $PROJECT_ROOT"
-          cd $PROJECT_ROOT
+          # 1. Находим корневую папку проекта (где лежит pubspec.yaml)
+          ROOT_DIR=$(find . -name "pubspec.yaml" -printf '%h\n' | head -n 1)
+          echo "Проект найден в папке: $ROOT_DIR"
+          cd $ROOT_DIR
 
-          # 2. Авто-замена названия на FOX RP
+          # 2. Исправляем название проекта (FOX RP) во всех манифестах
           find . -name "AndroidManifest.xml" -exec sed -i 's/android:label="[^"]*"/android:label="FOX RP"/' {} +
 
-          # 3. Авто-замена IP (ставим твой основной)
+          # 3. Подставляем твой IP в код серверов
           find . -name "*.dart" -exec sed -i 's/[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}:[0-9]\{4,5\}/188.127.241.74:2329/g' {} +
 
-          # 4. Авто-замена ссылки на КЭШ
+          # 4. Подставляем твою ссылку на кэш Dropbox
           find . -name "*.dart" -exec sed -i 's|https://[^"]*\.zip[^"]*|https://www.dropbox.com/scl/fi/g4791eve3lfu8t29imu75/cache.zip?rlkey=8y4ani8ol494h7fq40zph7vkz\&st=jr1mhztx\&dl=1|g' {} +
 
-          # 5. Принимаем лицензии Android и собираем
+          # 5. Принимаем лицензии Android (важно для фикса ошибки Gradle)
           yes | flutter doctor --android-licenses
+
+          # 6. Собираем проект
           flutter pub get
           flutter build apk --release --no-tree-shake-icons
 
